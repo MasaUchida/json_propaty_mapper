@@ -25,7 +25,7 @@ const textObjectCreate = (json: string) => {
 };
 
 //コンポーネントのプロパティのIDを手に入れる
-const getComponentPropertysId = (node: any) => {
+const getComponentPropertysId = (node: ComponentNode) => {
   const hoge = node.componentPropertyDefinitions;
   console.log(hoge);
 
@@ -49,6 +49,7 @@ figma.ui.onmessage = (msg) => {
         }*/
 
         if (node.type === "COMPONENT") {
+          getComponentPropertysId(node);
         }
       });
     }
