@@ -1,0 +1,43 @@
+<h2>json text mapper</h2>
+<div id="main-container">
+  <div id="input-container">
+    <label for="json">json入力口</label>
+    <textarea
+      name=""
+      id="json"
+      cols="25"
+      rows="10"
+      placeholder="jsonを入力してください"
+    ></textarea>
+  </div>
+  <button id="push">反映</button>
+</div>
+
+<script>
+  document.getElementById("push").onclick = () => {
+    //varidation時の準備
+    const inputContainer = document.querySelector("#input-container");
+    const errorSpan = document.createElement("span");
+    errorSpan.setAttribute("id", "validation-message");
+    errorSpan.innerText = "jsonの表記に何か間違いがあります";
+
+    //input周りの処理
+    const userInput = document.querySelector("#json").value;
+    const pureInput = userInput.replace(/,*\s*}$/, "\n}");
+
+    //code.tsからのmessageを受ける
+    window.addEventListener("message", (e) => {
+      console.log("from code:" + e.data.pluginMessage);
+      if (e.data.pluginMessage == "success") {
+        errorSpan.remove();
+      } else {
+        inputContainer.appendChild(errorSpan);
+      }
+    });
+
+    parent.postMessage(
+      { pluginMessage: { type: "throw-json", pureInput } },
+      "*"
+    );
+  };
+</script>
