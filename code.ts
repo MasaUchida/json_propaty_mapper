@@ -15,44 +15,22 @@ const textObjectCreate = (json: string) => {
   figma.currentPage.appendChild(jsonText);
 };
 
-//入力データのキーをインスタンスのpropertyIdデータにすり替える
-
-//なんでも入れられるobjectの型
-type objType = {
-  [props: string]: any;
+//インスタンスの型
+type instanceType = {
+  name: string;
+  [key: string]: string | boolean;
 };
 
-const swapInputObjectKeyToInstanceId = (
-  //改良できそう　毎回配列で返す必要はなさそう　indexをとって、keys[index]にして単発にすれば楽そうだぞ
-  data: any[],
-  keys: string[]
-): objType[] => {
-  const output = [];
-
-  for (const obj of data) {
-    const transformObject: objType = {};
-
-    for (const key of keys) {
-      //keyからid部分(#0:0)をカット
-      const property = key.replace(/#.*/, "");
-      //objectプロパティの追加
-      transformObject[key] = obj[property];
-    }
-
-    output.push(transformObject);
-  }
-
-  return output;
-};
+type instanceValue = Omit<instanceType, "name">;
 
 figma.ui.onmessage = (msg) => {
   if (msg.type === "throw-json") {
     const nodes: readonly SceneNode[] = figma.currentPage.selection;
-    const json = JSON.parse(msg.pureInput);
+    let json: any;
 
     if (nodes.length) {
       try {
-        const json = JSON.parse(msg.pureInput);
+        json = JSON.parse(msg.pureInput);
         figma.ui.postMessage("success");
       } catch (e) {
         console.log(e);
@@ -61,30 +39,42 @@ figma.ui.onmessage = (msg) => {
 
       nodes.forEach((node) => {
         if (node.type === "COMPONENT") {
-          const componentArray: any[] = json.components;
-          const componentsArrayLength = json.components.length;
+          const instancesArray: instanceType[] = json.instances;
+          const swapedKeyValueObject: instanceValue = {};
 
-          for (let i = 0; i < componentsArrayLength; i++) {
+          console.log(instancesArray);
+
+          instancesArray.forEach((instance) => {
             //インスタンスを作成
-            const instance = node.createInstance();
-
-            //レイヤー名をつける
-            instance.name = componentArray[i].name;
+            const newInstance = node.createInstance();
 
             //インスタンスのプロパティのidの配列を作成
+            //instancePropertyIds => ["hoge#0:0" , "fuga#0:0"]
             const instancePropertyIds = Object.keys(
-              instance.componentProperties
+              newInstance.componentProperties
             );
 
-            //id配列と入力objectのvalueでsetするobjectを作成
-            const setProp = swapInputObjectKeyToInstanceId(
-              componentArray,
-              instancePropertyIds
-            );
+            console.log("instancePropertyIds", instancePropertyIds);
 
-            //インスタンスにセット
-            instance.setProperties(setProp[i]);
-          }
+            //レイヤー名をつける
+            newInstance.name = instance.name;
+
+            //objectプロパティ {"hoge#0:0":"hogehoge"}を捻り出す
+            instancePropertyIds.forEach((keyWithId) => {
+              //keyからid部分(#0:0)をカット
+              const valueKey = keyWithId.substring(
+                0,
+                keyWithId.lastIndexOf("#")
+              );
+
+              //instancePropertyIdsをkeyにする
+              //このkeyからID部分を無くしたものをkeyにしてinstanceからvalueを呼び出す
+              swapedKeyValueObject[keyWithId] = instance[valueKey];
+            });
+
+            //インスタンスにセット {"hoge#0:0":"内容"}
+            newInstance.setProperties(swapedKeyValueObject);
+          });
         }
       });
     }
