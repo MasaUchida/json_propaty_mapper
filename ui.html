@@ -33,6 +33,7 @@
     //code.tsからのmessageを受ける
     window.addEventListener("message", (e) => {
       console.log("from code:" + e.data.pluginMessage);
+
       if (e.data.pluginMessage == "success") {
         errorSpan.remove();
       } else {
