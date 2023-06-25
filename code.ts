@@ -44,7 +44,7 @@ const getInstancePropertyIds = (targetInstance: InstanceNode) => {
  * @param instancePropertys
  * @returns object - {"hoge#0:0":"hogehoge"}
  */
-const makeSettingObject = (keyWithId: string, instancePropertys: any) => {
+const makeSettingObject = (keyWithId: string, instanceProperties: any) => {
   const outputObject: setInstancePropertyType = {};
 
   //keyからid部分(#0:0)をカット
@@ -52,10 +52,10 @@ const makeSettingObject = (keyWithId: string, instancePropertys: any) => {
 
   //{"hoge#0:0" : "hogehoge"}を作成
   if (
-    typeof instancePropertys[valueKey] === "string" ||
-    typeof instancePropertys[valueKey] === "boolean"
+    typeof instanceProperties[valueKey] === "string" ||
+    typeof instanceProperties[valueKey] === "boolean"
   ) {
-    outputObject[keyWithId] = instancePropertys[valueKey];
+    outputObject[keyWithId] = instanceProperties[valueKey];
   }
 
   return outputObject;
@@ -82,7 +82,7 @@ figma.ui.onmessage = (msg) => {
           const instancesArray: instanceType[] = json.instances;
 
           instancesArray.forEach((instance) => {
-            const { name, nestedInstances, ...proprtyes } = instance;
+            const { name, nestedInstances, ...proprties } = instance;
 
             //インスタンスを作成
             const newInstance = node.createInstance();
@@ -95,7 +95,7 @@ figma.ui.onmessage = (msg) => {
 
             ids.forEach((id) => {
               //setに必要な形にオブジェクトを整形
-              const settingObject = makeSettingObject(id, proprtyes);
+              const settingObject = makeSettingObject(id, proprties);
 
               //インスタンスにセット
               if (typeof settingObject !== "undefined") {
