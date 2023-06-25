@@ -2,12 +2,17 @@ const opsions = { width: 320, height: 320 };
 figma.showUI(__html__, opsions);
 
 //インスタンスの型
-type instanceType = {
-  name: string;
-  [key: string]: string | boolean;
+type inputJsonType = {
+  instances: instanceType[];
 };
 
-type instanceValue = Omit<instanceType, "name">;
+type instanceType = {
+  name: string;
+  [key: string]: string | boolean | instanceType[] | undefined;
+  nestedInstances?: instanceType[];
+};
+
+type setInstancePropertyType = { [key: string]: string | boolean };
 
 //フォント読み込み
 const fontLoader = async () => {
@@ -25,36 +30,41 @@ const textObjectCreate = (json: string) => {
 
 /**
  * インスタンスを放り込むと、放り込んだインスタンスのプロパティのid付き文字列の配列を返却
- * @param {InstanceNode} targetInstance - 対象のインスタンス
- * @returns {string[]} instancePropertyIds - プロパティのid付きstring配列を返却 ["hoge#0:0" , "fuga#0:0"]
+ * @param  targetInstance - 対象のインスタンス
+ * @returns string[] instancePropertyIds - プロパティのid付きstring配列を返却 ["hoge#0:0" , "fuga#0:0"]
  */
-const getInstancePropertyIds = (targetInstance: InstanceNode): string[] => {
+const getInstancePropertyIds = (targetInstance: InstanceNode) => {
   const instancePropertyIds = Object.keys(targetInstance.componentProperties);
   return instancePropertyIds;
 };
 
 /**
- * id付きkeyとpropertyのvalueでできたオブジェクトを返却する
+ * id付きkeyとpropertyを入力してpropertyとvalueでできたオブジェクトを返却する
  * @param keyWithId
- * @param targetInstance
+ * @param instancePropertys
  * @returns object - {"hoge#0:0":"hogehoge"}
  */
-const makeSettingObject = (keyWithId: string, targetInstance: instanceType) => {
-  const outputObject: instanceValue = {};
+const makeSettingObject = (keyWithId: string, instancePropertys: any) => {
+  const outputObject: setInstancePropertyType = {};
 
   //keyからid部分(#0:0)をカット
   const valueKey = keyWithId.substring(0, keyWithId.lastIndexOf("#"));
 
   //{"hoge#0:0" : "hogehoge"}を作成
-  outputObject[keyWithId] = targetInstance[valueKey];
+  if (
+    typeof instancePropertys[valueKey] === "string" ||
+    typeof instancePropertys[valueKey] === "boolean"
+  ) {
+    outputObject[keyWithId] = instancePropertys[valueKey];
+  }
 
   return outputObject;
 };
 
 figma.ui.onmessage = (msg) => {
   if (msg.type === "throw-json") {
-    const nodes: readonly SceneNode[] = figma.currentPage.selection;
-    let json: any;
+    const nodes = figma.currentPage.selection;
+    let json: inputJsonType;
 
     //jsonの記述に問題がないかの判定
     if (nodes.length) {
@@ -72,21 +82,25 @@ figma.ui.onmessage = (msg) => {
           const instancesArray: instanceType[] = json.instances;
 
           instancesArray.forEach((instance) => {
+            const { name, nestedInstances, ...proprtyes } = instance;
+
             //インスタンスを作成
             const newInstance = node.createInstance();
+
+            //レイヤー名をつける
+            newInstance.name = name;
 
             //インスタンスのプロパティのidの配列を作成
             const ids = getInstancePropertyIds(newInstance);
 
-            //レイヤー名をつける
-            newInstance.name = instance.name;
-
             ids.forEach((id) => {
               //setに必要な形にオブジェクトを整形
-              const settingObject = makeSettingObject(id, instance);
+              const settingObject = makeSettingObject(id, proprtyes);
 
               //インスタンスにセット
-              newInstance.setProperties(settingObject);
+              if (typeof settingObject !== "undefined") {
+                newInstance.setProperties(settingObject);
+              }
             });
           });
         }
