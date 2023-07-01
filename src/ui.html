@@ -16,18 +16,22 @@
     "title":"hoge2","content":"content2" } ] }
   </p>
   <button id="push">反映</button>
+  <button id="get">プロパティ取得</button>
 </div>
 
 <script>
-  document.getElementById("push").onclick = () => {
+  document.querySelector("#push").onclick = () => {
     //varidation時の準備
     const inputContainer = document.querySelector("#input-container");
     const errorSpan = document.createElement("span");
     errorSpan.setAttribute("id", "validation-message");
-    errorSpan.innerText = "jsonの表記に何か間違いがあります";
+    errorSpan.innerText = "テキストが空ないしjsonの表記に間違いがあります";
 
     //input周りの処理
     const userInput = document.querySelector("#json").value;
+    if (userInput === false) {
+      document.querySelector("#json").disabled = true;
+    }
     const pureInput = userInput.replace(/,*\s*}$/, "\n}");
 
     //code.tsからのmessageを受ける
@@ -37,7 +41,9 @@
       if (e.data.pluginMessage == "success") {
         errorSpan.remove();
       } else {
-        inputContainer.appendChild(errorSpan);
+        if (document.querySelector("#validation-message") === null) {
+          inputContainer.appendChild(errorSpan);
+        }
       }
     });
 
@@ -45,5 +51,9 @@
       { pluginMessage: { type: "throw-json", pureInput } },
       "*"
     );
+  };
+
+  document.querySelector("#get").onclick = () => {
+    parent.postMessage({ pluginMessage: { type: "get-property" } }, "*");
   };
 </script>

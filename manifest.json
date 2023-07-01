@@ -2,16 +2,12 @@
   "name": "json_propaty_mapper",
   "id": "1241772305085966451",
   "api": "1.0.0",
-  "main": "code.js",
+  "main": "./src/code.js",
   "capabilities": [],
   "enableProposedApi": false,
-  "editorType": [
-    "figma"
-  ],
-  "ui": "ui.html",
+  "editorType": ["figma"],
+  "ui": "./src/ui.html",
   "networkAccess": {
-    "allowedDomains": [
-      "none"
-    ]
+    "allowedDomains": ["none"]
   }
 }
